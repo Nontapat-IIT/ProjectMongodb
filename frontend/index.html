@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Management Dashboard</title>
+    <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+    <h1>ตารางรายชื่อนักศึกษา IIT 67</h1>
+    <div class="container">
+        <div class="task-input">
+            <input type="text" id="_id" placeholder="ใส่รหัสรับ" />
+            <br>
+            <input type="text" id="stid" placeholder="ใส่รหัสนักศึกษา" />
+            <br>
+            <input type="text" id="name" placeholder="ใส่ชื่อ" />
+            <br>
+            <input type="text" id="lname" placeholder="ใส่นามสกุล" />
+            <br>
+            <input type="text" id="nickname" placeholder="ใส่ชื่อเล่น" />
+            <br>
+            <input type="text" id="no" placeholder="ใส่เลขที่" />
+            <br>
+            <input type="text" id="grade" placeholder="ใส่เกรด" />
+            <br>
+            <button class="add-btn" onclick="addStudent()">เพิ่มนักศึกษา</button>
+        </div>
+        <div class="task-list">
+            <h2>รายชื่อนักศึกษา</h2>
+            <div>
+                <input type="text" id="searchStudent" placeholder="ใส่รหัสนักศึกษาที่ต้องการค้นหา" />
+                <button class="add-btn" onclick="searchStudent()">ค้นหานักศึกษา</button>
+            </div>
+            <table class="task-table" id="studentTable">
+                <thead>
+                    <tr>
+                        <th>รหัสนักศึกษา</th>
+                        <th>ชื่อ</th>
+                        <th>นามสกุล</th>
+                        <th>ชื่อเล่น</th>
+                        <th>เลขที่</th>
+                        <th>เกรด</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- ข้อมูลจะถูกเพิ่มที่นี่โดย JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // ฟังก์ชันดึงข้อมูลนักศึกษาทั้งหมดจาก API
+        async function getStudents() {
+            try {
+                const response = await fetch('http://localhost:3000/student');
+                const students = await response.json();
+                const tableBody = document.querySelector("#studentTable tbody");
+
+                // ลบข้อมูลในตารางเก่าก่อน
+                tableBody.innerHTML = '';
+
+                students.forEach(student => {
+                    const row = document.createElement("tr");
+
+                    row.innerHTML = `
+                        <td>${student.stid}</td>
+                        <td>${student.name}</td>
+                        <td>${student.lname}</td>
+                        <td>${student.nickname}</td>
+                        <td>${student.no}</td>
+                        <td>${student.grade}</td>
+                        <td><button id="Dstudent" class="delete-btn" onclick="deleteStudent('${student.stid}')">Delete</button></td>
+                    `;
+
+                    tableBody.appendChild(row);
+                });
+            } catch (error) {
+                console.error("Error fetching students:", error);
+            }
+        }
+
+        // ฟังก์ชันเพิ่มนักศึกษา
+        async function addStudent() {
+            const studentData = {
+                _id: document.getElementById("_id").value,
+                stid: document.getElementById("stid").value,
+                name: document.getElementById("name").value,
+                lname: document.getElementById("lname").value,
+                nickname: document.getElementById("nickname").value,
+                no: document.getElementById("no").value,
+                grade: document.getElementById("grade").value,
+            };
+
+            try {
+                const response = await fetch('http://localhost:3000/student', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(studentData),
+                });
+
+                // const students = await response.json();
+                // console.log(students);
+                if (response.ok) {
+                    getStudents(); // รีเฟรชข้อมูลในตาราง
+                }
+            } catch (error) {
+                console.error("Error adding student:", error);
+            }
+        }
+
+        // ฟังก์ชันค้นหานักศึกษา
+        async function searchStudent() {
+            const searchId = document.getElementById("searchStudent").value;
+            try {
+                const response = await fetch(`http://localhost:3000/student/${searchId}`);
+                const student = await response.json();
+                const tableBody = document.querySelector("#studentTable tbody");
+
+                // ลบข้อมูลในตารางเก่าก่อน
+                tableBody.innerHTML = '';
+
+                if (student) {
+                    const row = document.createElement("tr");
+
+                    row.innerHTML = `
+                        <td>${student.stid}</td>
+                        <td>${student.name}</td>
+                        <td>${student.lname}</td>
+                        <td>${student.nickname}</td>
+                        <td>${student.no}</td>
+                        <td>${student.grade}</td>
+                        <td><button class="delete-btn" onclick="deleteStudent('${student.stid}')">Delete</button></td>
+                    `;
+
+                    tableBody.appendChild(row);
+                }
+            } catch (error) {
+                console.error("Error searching student:", error);
+            }
+        }
+
+        // ฟังก์ชันแก้ไขนักศึกษา
+        // ฟังก์ชันที่แสดงข้อมูลนักเรียนที่ต้องการแก้ไขใน Popu
+
+        // ฟังก์ชันลบข้อมูลนักศึกษา
+        async function deleteStudent(stid) {
+            try {
+                const response = await fetch(`http://localhost:3000/student/${stid}`, {
+                    method: 'DELETE',
+                });
+
+                if (response.ok) {
+                    // รีเฟรชข้อมูลในตาราง หรือแสดงผลสำเร็จ
+                    getStudents(); // เรียกฟังก์ชันเพื่อดึงข้อมูลใหม่
+                    alert('Student deleted successfully'); // แสดงข้อความแจ้งเตือน
+                } else {
+                    const errorData = await response.json();
+                    console.error("Error:", errorData.message);
+                    alert('Failed to delete student: ' + errorData.message);
+                }
+            } catch (error) {
+                console.error("Error deleting student:", error);
+                alert('An error occurred while deleting the student.');
+            }
+        }
+        // เรียกใช้ฟังก์ชันเพื่อแสดงข้อมูลเมื่อตัวเว็บโหลด
+        getStudents();
+    </script>
+
+</body>
+
+</html>
